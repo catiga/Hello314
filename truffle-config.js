@@ -101,7 +101,7 @@ module.exports = {
     bsc_testnet: {
       provider: () => new HDWalletProvider({
         privateKeys: privateKey,
-        providerOrUrl: `https://data-seed-prebsc-1-s1.binance.org:8545`, //`https://endpoints.omniatech.io/v1/bsc/testnet/public`,
+        providerOrUrl: `https://data-seed-prebsc-1-s3.bnbchain.org:8545`, //`https://endpoints.omniatech.io/v1/bsc/testnet/public`,
         pollingInterval: 56000
       }),
       network_id: 97,
