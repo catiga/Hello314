@@ -5,11 +5,11 @@ pragma solidity ^0.8.20;
 import "./IEERC314.sol";
 import "@openzeppelin/contracts/utils/introspection/ERC165.sol";
 
-abstract contract ERC314 is IEERC314, IERC165 {
+abstract contract ERC314 is IEERC314Meta, IERC165 {
     mapping(address account => uint256) private _balances;
 
     uint256 private _totalSupply;
-    uint32 public blockToUnlockLiquidity;
+    uint256 public blockToUnlockLiquidity;
 
     string private _name;
     string private _symbol;
@@ -50,7 +50,8 @@ abstract contract ERC314 is IEERC314, IERC165 {
      */
     function supportsInterface(bytes4 interfaceId) public view virtual returns (bool) {
         return interfaceId == type(IERC165).interfaceId 
-            || interfaceId == type(IEERC314).interfaceId;
+            || interfaceId == type(IEERC314).interfaceId
+            || interfaceId == type(IEERC314Meta).interfaceId;
     }
 
     function assignedTo(address account, uint256 amount) internal virtual assignedOnce {

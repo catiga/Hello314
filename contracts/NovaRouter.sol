@@ -5,7 +5,9 @@ pragma solidity ^0.8.20;
 import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 import "@openzeppelin/contracts/utils/Strings.sol";
+import "@openzeppelin/contracts/utils/introspection/ERC165.sol";
 import "./interfaces/IEERC314.sol";
+import "./eips/IERC2510.sol";
 import "./interfaces/IVR.sol";
 
 contract NovaRouter is Initializable, INova { //, OwnableUpgradeable, INova {
@@ -90,7 +92,21 @@ contract NovaRouter is Initializable, INova { //, OwnableUpgradeable, INova {
         return partialList;
     }
 
+    function checkSupportsInterface(address _contract, bytes4 _interfaceId) public view returns (bool) {
+        (bool success, bytes memory result) = _contract.staticcall(abi.encodeWithSelector(IERC165.supportsInterface.selector, _interfaceId));
+        return (success && result.length == 32 && abi.decode(result, (bool)));
+    }
+
     function getTokenInfo(address _token314) view public returns(Token314Info memory data) {
+        if(checkSupportsInterface(_token314, type(IEERC314Meta).interfaceId)) {
+            return getIEERC314MetaInfo(_token314);
+        } else if(checkSupportsInterface(_token314, type(IERC2510).interfaceId)) {
+            return getIERC2510Info(_token314);
+        }
+        revert("unsupported protocol");
+    }
+
+    function getIEERC314MetaInfo(address _token314) public view returns (Token314Info memory data) {
         data.ca = _token314;
         data.blockToUnlockLiquidity = IEERC314Meta(_token314).blockToUnlockLiquidity();
         data.decimals = IEERC314Meta(_token314).decimals();
@@ -102,6 +118,16 @@ contract NovaRouter is Initializable, INova { //, OwnableUpgradeable, INova {
         data.symbol = IEERC314Meta(_token314).symbol();
         data.totalSupply = IEERC314Meta(_token314).totalSupply();
         data.tradingEnable = IEERC314Meta(_token314).tradingEnable();
+        return data;
+    }
+
+    function getIERC2510Info(address _token314) public view returns (Token314Info memory data) {
+        data.ca = _token314;
+        data.decimals = IERC2510(_token314).decimals();
+        (data.pool0p, data.pool1p) = IERC2510(_token314).getReserves();
+        data.name = IERC2510(_token314).name();
+        data.symbol = IERC2510(_token314).symbol();
+        data.totalSupply = IERC2510(_token314).totalSupply();
         return data;
     }
 
