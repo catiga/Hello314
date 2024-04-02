@@ -38,7 +38,12 @@ contract TplStandard is ERC314 {
     }
 
     constructor(address _owner_, string memory name_, string memory symbol_, 
-        uint256 _totalSupply, uint256 _decimals, uint256 _maxWallet_) assigned ERC314(name_, symbol_, _totalSupply) {
+        uint256 _totalSupply, uint256 _decimals, uint256 _maxWallet_,
+        uint256 _teamPartial, uint256 _presalePartial) assigned 
+        ERC314(name_, symbol_, _totalSupply) {
+        
+        require((_teamPartial + _presalePartial) <= 10_000, "partial params is invalid");
+
         owner = _owner_;    // transfer owner
 
         _maxWallet = _maxWallet_;
@@ -48,9 +53,23 @@ contract TplStandard is ERC314 {
         }
         tokenDecimals = _decimals;
 
-        presaleAmount = (_totalSupply - _totalSupply/10) / 2;
-        assignedTo(owner, _totalSupply/10 + presaleAmount);
-        assignedTo(address(this), presaleAmount);
+        if(_presalePartial > 0) {
+            presaleAmount = _totalSupply * _presalePartial / 10_000;
+        }
+        uint256 teamAmount = 0;
+        if(_teamPartial > 0) {
+            teamAmount = _totalSupply * _teamPartial /  10_000;
+        }
+        if(presaleAmount + teamAmount > 0) {
+            assignedTo(owner, presaleAmount + teamAmount);  // team + presale
+        }
+        if(_totalSupply - presaleAmount - teamAmount > 0) {
+            assignedTo(address(this), _totalSupply - presaleAmount - teamAmount);   // liquidity pool
+        }
+        
+        //presaleAmount = (_totalSupply - _totalSupply/10) / 2;
+        // assignedTo(owner, _totalSupply/10 + presaleAmount);
+        // assignedTo(address(this), presaleAmount);
         liquidityAdded = false;
     }
 

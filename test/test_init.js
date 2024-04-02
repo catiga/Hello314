@@ -7,8 +7,8 @@ contract('NovaRouter through NovaProxy', (accounts) => {
         let novaProxyInstance;
 
         it(`should return Name:`, async () => {
-            novaRouterInstance = await NovaRouter.at('0xDBC8f17E165869532ee1E4b7e64D90dAE780f3B6')
-            novaProxyInstance = await NovaProxy.at('0x3E58130455F143C05A0EF6426184b54DF31aA60C')
+            novaRouterInstance = await NovaRouter.at('0x398257729721c4070459496ba1cACD254ceA3CEc')
+            novaProxyInstance = await NovaProxy.at('0x765dE71f18b444C4EAd36786b22b71E19BC71D58')
             const owner = await novaProxyInstance.owner();
             const impl = await novaProxyInstance.getImplementation()
             const novaLogicInstanceAtProxyAddress = new web3.eth.Contract(NovaRouter.abi, novaProxyInstance.address);
