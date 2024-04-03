@@ -8,7 +8,8 @@ import "@openzeppelin/contracts/access/Ownable.sol";
 import "./TplStandard.sol";
 
 contract TokenFactory is Ownable {
-    event NewDeployed(address indexed deployer, address indexed contractAddr);
+    event NewDeployed(address indexed deployer, address indexed contractAddr, bytes32 indexed codeHash);
+    event AddNewTpl(bytes32 indexed codeHash);
 
     mapping(address => address[]) public deployedContracts;
     mapping(bytes32 codeHash => bool) public securityCodes;
@@ -37,11 +38,13 @@ contract TokenFactory is Ownable {
 
         require(contractAddr != address(0), "Failed to deploy contract");
 
-        emit NewDeployed(msg.sender, contractAddr);
+        emit NewDeployed(msg.sender, contractAddr, codeHash);
     }
 
     function configCode(bytes32 codeHash, bool enable) onlyOwner public {
         securityCodes[codeHash] = enable;
+        tpls.push(codeHash);
+        emit AddNewTpl(codeHash);
     }
 
     bytes16 private constant ALPHABET = "0123456789abcdef";
