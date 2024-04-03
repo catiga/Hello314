@@ -3,7 +3,7 @@ const { deploy } = require("truffle-contract/lib/execute");
 const NovaProxy = artifacts.require("NovaProxy");
 const NovaRouter = artifacts.require("NovaRouter");
 
-const _deployedRouter_ = "0x398257729721c4070459496ba1cACD254ceA3CEc"
+const _deployedRouter_ = "0xBc7543AB699a50Cc1eD4e97C88293ba52796F514"
 const _deployedProxy_ = "0x765dE71f18b444C4EAd36786b22b71E19BC71D58"
 
 module.exports = async function (deployer) {
