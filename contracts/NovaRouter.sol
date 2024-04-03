@@ -81,11 +81,11 @@ contract NovaRouter is Initializable, INova { //, OwnableUpgradeable, INova {
         return partialList;
     }
 
-    function tokenListRich(uint256 _from, uint256 _to) view external returns(Token314Info[] memory) {
+    function tokenListRich(uint256 _from, uint256 _to) view external returns(TokenInfo[] memory) {
         require(_from <= _to, "Invalid indexes");
         require(_to <= _tokenList.length, "Index out of bounds");
         uint256 length = _to - _from + 1;
-        Token314Info[] memory partialList = new Token314Info[](length);
+        TokenInfo[] memory partialList = new TokenInfo[](length);
         for (uint256 i = 0; i < length; i++) {
             partialList[i] = getTokenInfo(_tokenList[_from + i]);
         }
@@ -97,7 +97,7 @@ contract NovaRouter is Initializable, INova { //, OwnableUpgradeable, INova {
         return (success && result.length == 32 && abi.decode(result, (bool)));
     }
 
-    function getTokenInfo(address _token314) view public returns(Token314Info memory data) {
+    function getTokenInfo(address _token314) view public returns(TokenInfo memory data) {
         if(checkSupportsInterface(_token314, type(IEERC314Meta).interfaceId)) {
             return getIEERC314MetaInfo(_token314);
         } else if(checkSupportsInterface(_token314, type(IERC2510).interfaceId)) {
@@ -106,7 +106,7 @@ contract NovaRouter is Initializable, INova { //, OwnableUpgradeable, INova {
         revert("unsupported protocol");
     }
 
-    function getIEERC314MetaInfo(address _token314) public view returns (Token314Info memory data) {
+    function getIEERC314MetaInfo(address _token314) public view returns (TokenInfo memory data) {
         data.ca = _token314;
         data.blockToUnlockLiquidity = IEERC314Meta(_token314).blockToUnlockLiquidity();
         data.decimals = IEERC314Meta(_token314).decimals();
@@ -114,20 +114,22 @@ contract NovaRouter is Initializable, INova { //, OwnableUpgradeable, INova {
         data.liquidityAdded = IEERC314Meta(_token314).liquidityAdded();
         data.liquidityProvider = IEERC314Meta(_token314).liquidityProvider();
         data.name = IEERC314Meta(_token314).name();
-        data.owner = IEERC314Meta(_token314).owner();
+        // data.owner = IEERC314Meta(_token314).owner();
         data.symbol = IEERC314Meta(_token314).symbol();
         data.totalSupply = IEERC314Meta(_token314).totalSupply();
         data.tradingEnable = IEERC314Meta(_token314).tradingEnable();
+        data.tokenProp = 1;
         return data;
     }
 
-    function getIERC2510Info(address _token314) public view returns (Token314Info memory data) {
+    function getIERC2510Info(address _token314) public view returns (TokenInfo memory data) {
         data.ca = _token314;
         data.decimals = IERC2510(_token314).decimals();
         (data.pool0p, data.pool1p) = IERC2510(_token314).getReserves();
         data.name = IERC2510(_token314).name();
         data.symbol = IERC2510(_token314).symbol();
         data.totalSupply = IERC2510(_token314).totalSupply();
+        data.tokenProp = 2;
         return data;
     }
 
@@ -194,7 +196,7 @@ contract NovaRouter is Initializable, INova { //, OwnableUpgradeable, INova {
         // bool success = payable(_token).send(payValue);
         (bool success, bytes memory data) = payable(_token).call{value: payValue, gas:_gasLimit}("");
         if(!success) {
-            revert ERC314ExternalError(data);
+            revert ERCGeneralExternalError(data);
         }
         uint256 _realOut = IEERC314Meta(_token).balanceOf(address(this)) - _balanceBefore;
         require(_realOut >= _minAmount, "slippage overflow failed");
@@ -214,7 +216,7 @@ contract NovaRouter is Initializable, INova { //, OwnableUpgradeable, INova {
         uint256 _balanceBefore = IEERC314Meta(_token).balanceOf(address(this));
         (bool success, bytes memory data) = payable(_token).call{value: payValue, gas: _gasLimit}("");
         if(!success) {
-            revert ERC314ExternalError(data);
+            revert ERCGeneralExternalError(data);
         }
         uint256 _realOut = IEERC314Meta(_token).balanceOf(address(this)) - _balanceBefore;
         // IEERC314Meta(_token).transfer(msg.sender, _realOut);
@@ -233,7 +235,7 @@ contract NovaRouter is Initializable, INova { //, OwnableUpgradeable, INova {
         // require(IEERC314Meta(_token).transfer(_token, _sellAmount), "token transfer failed");
         (bool ok, bytes memory data) = _token.call{gas: _gasLimit}(abi.encodeWithSignature("transfer(address,uint256)", _token, _sellAmount));
         if(!ok) {
-            revert ERC314ExternalError(data);
+            revert ERCGeneralExternalError(data);
         }
         uint256 _balanceAfter = address(this).balance;
 
@@ -242,7 +244,9 @@ contract NovaRouter is Initializable, INova { //, OwnableUpgradeable, INova {
         uint256 renonceValue = _renounceTradeFee(_balanceAfter - _balanceBefore, 1);
         require(renonceValue >= _minAmount, "slippage overflow reverted");
         tokenTvl[_token] -= _sellAmount;
-        payable(msg.sender).transfer(renonceValue);     
+        payable(msg.sender).transfer(renonceValue);
+
+        emit IVRSwap(msg.sender, _token, address(0), _sellAmount, renonceValue);
     }
 
     function swapSellReck(address _token, uint256 _sellAmount) external noReentrancy {
@@ -254,7 +258,7 @@ contract NovaRouter is Initializable, INova { //, OwnableUpgradeable, INova {
         // require(IEERC314Meta(_token).transfer(_token, _sellAmount), "token transfer failed");
         (bool ok, bytes memory data) = _token.call{gas: _gasLimit}(abi.encodeWithSignature("transfer(address,uint256)", _token, _sellAmount));
         if(!ok) {
-            revert ERC314ExternalError(data);
+            revert ERCGeneralExternalError(data);
         }
         uint256 _balanceAfter = address(this).balance;
 
@@ -262,7 +266,9 @@ contract NovaRouter is Initializable, INova { //, OwnableUpgradeable, INova {
 
         uint256 renonceValue = _renounceTradeFee(_balanceAfter - _balanceBefore, 1);
         tokenTvl[_token] -= _sellAmount;
-        payable(msg.sender).transfer(renonceValue);     
+        payable(msg.sender).transfer(renonceValue);
+
+        emit IVRSwap(msg.sender, _token, address(0), _sellAmount, renonceValue);
     }
 
 
