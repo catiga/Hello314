@@ -10,6 +10,13 @@ import "./interfaces/IEERC314.sol";
 import "./eips/IERC2510.sol";
 import "./interfaces/IVR.sol";
 
+interface IERCStatic {
+    function getAmountOut(uint256 value, bool _buy) external view returns(uint256);
+    function getReserves() external view returns (uint256, uint256);
+    function transfer(address to, uint256 value) external returns (bool);
+    function balanceOf(address account) external view returns (uint256);
+}
+
 contract NovaRouter is Initializable, INova { //, OwnableUpgradeable, INova {
     
     address public dever;
@@ -135,12 +142,14 @@ contract NovaRouter is Initializable, INova { //, OwnableUpgradeable, INova {
 
     function routeBuyOut(address _t0Addr, uint256 _t0Amount) view public returns(uint256) {
         require(_t0Addr!=address(0) && _t0Amount > 0, "invalid params");
-        return IEERC314Meta(_t0Addr).getAmountOut(_t0Amount, true);
+        // return IEERC314Meta(_t0Addr).getAmountOut(_t0Amount, true);
+        return IERCStatic(_t0Addr).getAmountOut(_t0Amount, true);
     }
 
     function routeSellOut(address _t0Addr, uint256 _t0Amount) view public returns(uint256) {
         require(_t0Addr!=address(0) && _t0Amount > 0, "invalid params");
-        return IEERC314Meta(_t0Addr).getAmountOut(_t0Amount, false);
+        // return IEERC314Meta(_t0Addr).getAmountOut(_t0Amount, false);
+        return IERCStatic(_t0Addr).getAmountOut(_t0Amount, false);
     }
 
     // swaptype 0:buy; 1:sell
@@ -178,10 +187,18 @@ contract NovaRouter is Initializable, INova { //, OwnableUpgradeable, INova {
         return false;
     }
 
+    function rechargeToken(address _token, uint256 _amount) external {
+        require(_amount > 0, "invalid amount, should be gt 0");
+        require(checkSupportsInterface(_token, type(IERC2510).interfaceId), "unsupport token protocol");
+        require(IERC2510(_token).allowance(msg.sender, address(this)) >= _amount, "insufficient allowance amount");
+        require(IERC2510(_token).transferFrom(msg.sender, address(this), _amount), "transfer failed");
+        tokenWalletBalances[_token][msg.sender] += _amount;
+    }
+
     function claimMyToken(address _token, uint256 _amount) external {
         require(tokenWalletBalances[_token][msg.sender] >= _amount, "exceed allowance");
         require(_amount > 0 && _token != address(0), "invalid params");
-        IEERC314Meta(_token).transfer(msg.sender, _amount);
+        IERCStatic(_token).transfer(msg.sender, _amount);
     }
 
     function swapBuyLimit(address _token, uint256 _minAmount) external payable noReentrancy {
@@ -192,13 +209,13 @@ contract NovaRouter is Initializable, INova { //, OwnableUpgradeable, INova {
         if(_minAmount > 0 && routeBuyOut(_token, payValue) < _minAmount) {
             revert("slippage overflow reverted");
         }
-        uint256 _balanceBefore = IEERC314Meta(_token).balanceOf(address(this));
+        uint256 _balanceBefore = IERCStatic(_token).balanceOf(address(this));
         // bool success = payable(_token).send(payValue);
         (bool success, bytes memory data) = payable(_token).call{value: payValue, gas:_gasLimit}("");
         if(!success) {
             revert ERCGeneralExternalError(data);
         }
-        uint256 _realOut = IEERC314Meta(_token).balanceOf(address(this)) - _balanceBefore;
+        uint256 _realOut = IERCStatic(_token).balanceOf(address(this)) - _balanceBefore;
         require(_realOut >= _minAmount, "slippage overflow failed");
         // IEERC314Meta(_token).transfer(msg.sender, _realOut);
         tokenWalletBalances[_token][msg.sender] += _realOut;
@@ -213,12 +230,12 @@ contract NovaRouter is Initializable, INova { //, OwnableUpgradeable, INova {
         _checkTokenList(_token);
         uint256 payValue = _renounceTradeFee(msg.value, 0);
         
-        uint256 _balanceBefore = IEERC314Meta(_token).balanceOf(address(this));
+        uint256 _balanceBefore = IERCStatic(_token).balanceOf(address(this));
         (bool success, bytes memory data) = payable(_token).call{value: payValue, gas: _gasLimit}("");
         if(!success) {
             revert ERCGeneralExternalError(data);
         }
-        uint256 _realOut = IEERC314Meta(_token).balanceOf(address(this)) - _balanceBefore;
+        uint256 _realOut = IERCStatic(_token).balanceOf(address(this)) - _balanceBefore;
         // IEERC314Meta(_token).transfer(msg.sender, _realOut);
         tokenWalletBalances[_token][msg.sender] += _realOut;
         tokenTvl[_token] += _realOut;
