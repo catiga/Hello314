@@ -23,6 +23,9 @@ contract('NovaRouter through NovaProxy', (accounts) => {
             const tokenLength = await novaLogicInstanceAtProxyAddress.methods.tokenLength().call()
             console.log('tokenLength', tokenLength)
 
+            const tokenInfo = await novaLogicInstanceAtProxyAddress.methods.getTokenInfo('0x10F86D3C97A0dF10a5399363Af175a4F9bB69363').call()
+            console.log('tokenInfo', tokenInfo)
+
             // const result = await novaLogicInstanceAtProxyAddress.methods.adjustTax(20, 20).send({ from: accounts[0], gasPrice:8000000000, gas:5000000 });
             // console.log('adjust tax result', result)
             
