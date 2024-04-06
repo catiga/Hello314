@@ -32,7 +32,7 @@ contract ERC2510 is Context, ERC2510Liquidity, IERC165 {
         _symbol = symbol_;
         _totalSupply = totalSupply_;
         _keeper = new ERC2510Keeper();
-        _mint(msg.sender, _totalSupply);
+        // _mint(msg.sender, _totalSupply);
         if(msg.value > 0) {
             payable(_keeper).transfer(msg.value);
         }
