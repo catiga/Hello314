@@ -9,8 +9,9 @@ const updateDeployerPK = process.env.NEW_DEPLOYER_PK || ''
 const mintfunDeployerPK = process.env.MINTFUN_DEPLOYER_PK || ''
 const polygonDeployerPK = process.env.POLYGON_TEST_PK || ''
 const liveNetworkPKBase = process.env.BASE_PK || ''
+const playPK = process.env.PLAY_PK
 
-const privateKey = [ liveNetworkPK, mintfunDeployerPK ]
+const privateKey = [ liveNetworkPK, mintfunDeployerPK, playPK ]
 const privateAddress = process.env.LIVE_ADDRESS
 const etherscanApiKey = process.env.ETHERS_SCAN_API_KEY || ''
 const polygonApiKey = process.env.POLYGON_SCAN_API_KEY || ''
