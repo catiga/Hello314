@@ -101,7 +101,7 @@ contract Tp2510 is ERC2510 {
         tradingEnable = true;
         liquidityProvider = msg.sender;
         
-        emit AddLiquidity(_blockToUnlockLiquidity, msg.value);
+        emit AddLiquidity(msg.sender, _blockToUnlockLiquidity, msg.value);
     }
 
     /**

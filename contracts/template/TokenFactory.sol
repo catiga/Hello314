@@ -6,7 +6,7 @@ pragma solidity ^0.8.20;
 
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "./TplStandard.sol";
-import "./Tpl2510.sol";
+import "./Tp2510.sol";
 
 contract TokenFactory is Ownable {
     event NewDeployed(address indexed deployer, address indexed contractAddr, bytes32 indexed codeHash);
@@ -14,6 +14,9 @@ contract TokenFactory is Ownable {
 
     mapping(bytes32 codeHash => bool) public securityCodes;
     bytes32[] public tpls;
+
+    mapping(address => address[]) public walletDeployed;
+    uint256 public walletLimit = 10;
 
     constructor() Ownable(msg.sender){
         bytes32 codeHashTplSimple = keccak256(type(TplStandard).creationCode);
@@ -29,7 +32,14 @@ contract TokenFactory is Ownable {
         return tpls;
     }
 
+    function getWalletDeployContract() external view returns(address[] memory) {
+        return walletDeployed[msg.sender];
+    }
+
     function deployContract(bytes memory bytecode, bytes memory constructorArgs) external payable {
+
+        require(walletDeployed[msg.sender].length < walletLimit, "exceed single wallet limit");
+
         bytes32 codeHash = keccak256(bytecode);
         require(securityCodes[codeHash], string(abi.encodePacked("Invalid bytecode hash:", bytes32ToHexString(codeHash))));
 
@@ -42,6 +52,8 @@ contract TokenFactory is Ownable {
 
         require(contractAddr != address(0), "Failed to deploy contract");
 
+        walletDeployed[msg.sender].push(contractAddr);
+
         emit NewDeployed(msg.sender, contractAddr, codeHash);
     }
 
@@ -49,6 +61,10 @@ contract TokenFactory is Ownable {
         securityCodes[codeHash] = enable;
         tpls.push(codeHash);
         emit AddNewTpl(codeHash);
+    }
+
+    function configLimit(uint256 _limit) onlyOwner external {
+        walletLimit = _limit;
     }
 
     bytes16 private constant ALPHABET = "0123456789abcdef";
