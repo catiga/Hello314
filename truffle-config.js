@@ -44,9 +44,21 @@ module.exports = {
       network_id: "5777",
       websocket: true
     },
+    blast_mainnet: {
+      provider: () => new HDWalletProvider({
+        privateKeys: privateKey,
+        providerOrUrl: `https://rpc.blast.io`,
+        pollingInterval: 56000
+      }),
+      network_id: 81457,
+      confirmations: 2,
+      timeoutBlocks: 100,
+      skipDryRun: true,
+      from: privateAddress,
+      networkCheckTimeout: 99999999
+    },
     dis_mainnet: {
       provider: () => new HDWalletProvider({
-        //privateKeys: updatePrivateKey,
         privateKeys: privateKey,
         providerOrUrl: `https://rpc.dischain.xyz`,
         pollingInterval: 56000
@@ -55,7 +67,6 @@ module.exports = {
       confirmations: 2,
       timeoutBlocks: 100,
       skipDryRun: true,
-      // from: updatePrivateAddress,
       from: privateAddress,
       networkCheckTimeout: 99999999
     },
