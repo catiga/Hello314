@@ -5,20 +5,24 @@ import "@openzeppelin/contracts/utils/introspection/ERC165.sol";
 import "@openzeppelin/contracts/utils/Context.sol";
 import "./IERC2510.sol";
 import "./ERC2510Liquidity.sol";
+import "./ERC2510Keeper.sol";
 
-contract ERC2510 is Context, ERC2510Liquidity, IERC165 {
+/**
+ * @title ERC2510 Token Implementation
+ * @notice Implements the ERC2510 token standard with built-in liquidity and value recovery mechanisms.
+ * @dev Extends ERC20 to support enhanced stability and transparent value through a base liquidity pool.
+ */
+contract ERC2510 is Context, IERC2510, ERC2510Liquidity, IERC165 {
 
     mapping(address account => uint256) private _balances;
-
     mapping(address account => mapping(address spender => uint256)) private _allowances;
 
     uint256 private _totalSupply;
-
     string private _name;
     string private _symbol;
 
     ERC2510Keeper private _keeper;
-
+    // Mapping to prevent multiple operations within the same block by a single address.
     mapping(address account => uint32) private lastTransaction;
 
     /**
@@ -75,8 +79,9 @@ contract ERC2510 is Context, ERC2510Liquidity, IERC165 {
     }
 
     /**
-     * @dev Returns the total irrevocable value while token issued.
-     * This value represents the underlying assets backing the ERC2510 tokens, ensuring their intrinsic value.
+     * @notice Returns the total value locked in the base liquidity pool
+     * @dev Represents the minimum guaranteed value of ERC2510 tokens
+     * @return Total value in the base liquidity pool
      */
     function solidValue() external view returns (uint256) {
         return address(_keeper).balance;
@@ -93,26 +98,24 @@ contract ERC2510 is Context, ERC2510Liquidity, IERC165 {
     }
 
     /**
-    * @dev Retrieves a specific value from the base liquidity pool and burns the corresponding amount of tokens.
-    * This function allows token holders to extract the intrinsic value of their tokens directly from the base liquidity pool,
-    * reducing the total supply of tokens in circulation and potentially increasing the value of the remaining tokens.
-    * @param _amount The amount of value (in terms of the underlying asset) to be retrieved from the base liquidity pool.
-    * The function calculates the amount of tokens to be burned based on the current value per token in the pool.
-    * Tokens are then burned, and the equivalent value is transferred to the caller.
-    * This operation may be subject to additional conditions or restrictions to maintain the overall health and stability of the token ecosystem.
-    */
+     * @notice Allows token holders to retrieve value from the base liquidity pool by burning tokens
+     * @dev Reduces the total supply of tokens in circulation and increases the value of the remaining tokens
+     * @param _amount Amount of tokens to burn
+     */
     function retrieveTokenValue(uint256 _amount) external {
         require(_balances[msg.sender] >= _amount, "insufficient balance");
-        require(_amount > 0, "retrive value should be gt 0");
+        require(_amount > 0, "retrieve value should be gt 0");
         require(_totalSupply > 0, "Total supply cannot be zero");
         uint256 payval = address(_keeper).balance * _amount / _totalSupply;
         _burn(msg.sender, _amount);
-        _keeper.retriveValue(msg.sender, payval);
+        _keeper.retrieveValue(msg.sender, payval);
     }
 
     /**
-    * @dev Returns the amount of ETH and tokens in the contract, used for trading.
-    */
+     * @notice Retrieves the current state of the liquidity reserves
+     * @return reserve0 Amount of ETH in the contract
+     * @return reserve1 Amount of ERC2510 tokens in the contract
+     */
     function getReserves() public view returns (uint256, uint256) {
         return (address(this).balance, _balances[address(this)]);
     }
