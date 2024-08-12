@@ -31,7 +31,7 @@ contract Tp2510 is ERC2510 {
 
     constructor(address _owner_, string memory name_, string memory symbol_, 
         uint256 _totalSupply, uint256 _decimals,
-        uint256 _teamPartial, uint256 _presalePartial) payable ERC2510(name_, symbol_, _totalSupply) {
+        uint256 _teamPartial, uint256 _presalePartial) payable ERC2510(name_, symbol_) {
         require((_teamPartial + _presalePartial) <= 10_000, "partial params is invalid");
 
         owner = _owner_;    // transfer owner

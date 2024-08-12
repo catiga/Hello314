@@ -4,6 +4,7 @@ const NovaRouter = artifacts.require("NovaRouter");
 const NovaProxy = artifacts.require("NovaProxy");
 
 module.exports = async function (deployer, network, accounts) {
+  console.log('accounts', accounts)
 
   await deployer.deploy(NovaRouter);
   console.log('NovaRouter deploy succeed:', NovaRouter.address)

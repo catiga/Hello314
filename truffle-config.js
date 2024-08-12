@@ -17,6 +17,9 @@ const etherscanApiKey = process.env.ETHERS_SCAN_API_KEY || ''
 const polygonApiKey = process.env.POLYGON_SCAN_API_KEY || ''
 const bscApiKey = process.env.BSC_SCAN_API_KEY || ''
 
+const hellodexPk = process.env.HELLODEX_PK || ''
+const hellodexAddr = process.env.HELLODEX_ADDRESS
+
 /* just for treasury deploy and manage */
 const updatePrivateKey = [updateDeployerPK]
 const updatePrivateAddress = process.env.NEW_DEPLOYER_ADDRESS
@@ -35,6 +38,8 @@ const polygonPrivateAddress = process.env.POLYGON_TEST_ADDRESS
 /* base */
 const privateKeyBase = [ liveNetworkPKBase ]
 const privateAddressBase = process.env.BASE_ADDRESS
+
+const hellodexPrivateKey = [hellodexPk]
 
 module.exports = {
   networks: {
@@ -85,7 +90,7 @@ module.exports = {
     },
     bsc_mainnet: {
       provider: () => new HDWalletProvider({
-        privateKeys: privateKey,
+        privateKeys: hellodexPrivateKey,
         providerOrUrl: `https://bsc-dataseed1.ninicoin.io`,
         pollingInterval: 56000
       }),
@@ -93,7 +98,7 @@ module.exports = {
       confirmations: 2,
       timeoutBlocks: 100,
       skipDryRun: true,
-      from: privateAddress,
+      from: hellodexAddr,
       networkCheckTimeout: 999999
     },
     base_mainnet: {
